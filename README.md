@@ -19,12 +19,15 @@ The package registers its own service provider.
 - Laravel Framework >= 12.0
 - guzzlehttp/guzzle >= 7.0
 
-## SDK Usage Example
+## Publish the Config
 
-Install `guzzlehttp/guzzle` in your consumer project:
+To publish the config file to your app, run:
+
 ```
-composer require guzzlehttp/guzzle
+php artisan vendor:publish --tag=central-payment-gateway-config
 ```
+
+## SDK Usage Example
 
 ### Initialize the client
 ```php
