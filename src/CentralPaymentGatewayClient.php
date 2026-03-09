@@ -39,7 +39,7 @@ class CentralPaymentGatewayClient
     {
         $method = 'POST';
         $endpoint = '/api/v1/payments';
-        $body = json_encode($payload);
+        $body = !empty($payload) ? json_encode($payload) : '';
         $timestamp = (string)time();
         $signature = $this->generateSignature(
             $this->apiKey,
