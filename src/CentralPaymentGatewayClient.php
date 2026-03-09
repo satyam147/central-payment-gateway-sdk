@@ -6,7 +6,7 @@ use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 
-class Client
+class CentralPaymentGatewayClient
 {
     protected GuzzleClient $http;
     protected string $baseUrl;
@@ -30,9 +30,15 @@ class Client
      * @param array $payload (amount, currency, etc)
      * @return ResponseInterface
      */
+    /**
+     * Initiate a payment.
+     * POST /api/v1/payments
+     * @param array $payload
+     * @return ResponseInterface
+     */
     public function initiatePayment(array $payload): ResponseInterface
     {
-        $endpoint = '/api/payment';
+        $endpoint = '/api/v1/payments';
         $body = json_encode($payload);
         $timestamp = time();
         $signature = $this->generateSignature('POST', $endpoint, $body, $timestamp);
@@ -49,13 +55,14 @@ class Client
     }
 
     /**
-     * Get payment status
-     * @param string $paymentId
+     * Get payment status/details.
+     * GET /api/v1/payments/{transaction}
+     * @param string $transactionId
      * @return ResponseInterface
      */
-    public function getPaymentStatus(string $paymentId): ResponseInterface
+    public function getPaymentStatus(string $transactionId): ResponseInterface
     {
-        $endpoint = "/api/payment/{$paymentId}";
+        $endpoint = "/api/v1/payments/{$transactionId}";
         $timestamp = time();
         $signature = $this->generateSignature('GET', $endpoint, null, $timestamp);
         return $this->http->request('GET', $endpoint, [
@@ -66,6 +73,71 @@ class Client
             ]
         ]);
     }
+
+    /**
+     * Manual payment status check.
+     * POST /api/v1/payments/{transaction}/check-status
+     * @param string $transactionId
+     * @return ResponseInterface
+     */
+    public function checkPaymentStatus(string $transactionId): ResponseInterface
+    {
+        $endpoint = "/api/v1/payments/{$transactionId}/check-status";
+        $timestamp = time();
+        $signature = $this->generateSignature('POST', $endpoint, '', $timestamp);
+        return $this->http->request('POST', $endpoint, [
+            'headers' => [
+                'X-Api-Key' => $this->apiKey,
+                'X-Signature' => $signature,
+                'X-Timestamp' => $timestamp,
+            ],
+        ]);
+    }
+
+    /**
+     * Refund a payment.
+     * POST /api/v1/payments/{transaction}/refunds
+     * @param string $transactionId
+     * @param array $payload
+     * @return ResponseInterface
+     */
+    public function refundPayment(string $transactionId, array $payload = []): ResponseInterface
+    {
+        $endpoint = "/api/v1/payments/{$transactionId}/refunds";
+        $body = !empty($payload) ? json_encode($payload) : '';
+        $timestamp = time();
+        $signature = $this->generateSignature('POST', $endpoint, $body, $timestamp);
+        return $this->http->request('POST', $endpoint, [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'X-Api-Key' => $this->apiKey,
+                'X-Signature' => $signature,
+                'X-Timestamp' => $timestamp,
+            ],
+            'body' => $body,
+        ]);
+    }
+
+    /**
+     * Get refund summary.
+     * GET /api/v1/payments/{transaction}/refunds/summary
+     * @param string $transactionId
+     * @return ResponseInterface
+     */
+    public function getRefundSummary(string $transactionId): ResponseInterface
+    {
+        $endpoint = "/api/v1/payments/{$transactionId}/refunds/summary";
+        $timestamp = time();
+        $signature = $this->generateSignature('GET', $endpoint, null, $timestamp);
+        return $this->http->request('GET', $endpoint, [
+            'headers' => [
+                'X-Api-Key' => $this->apiKey,
+                'X-Signature' => $signature,
+                'X-Timestamp' => $timestamp,
+            ]
+        ]);
+    }
+
 
     /**
      * List transactions

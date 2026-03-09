@@ -31,13 +31,13 @@ php artisan vendor:publish --tag=central-payment-gateway-config
 
 ### Initialize the client
 ```php
-use Satyam147\CentralPaymentGateway\Client;
+use Satyam147\CentralPaymentGateway\CentralPaymentGatewayClient;
 
 // Easiest: Automatically uses config values from config/central-payment-gateway.php
-$client = new Client();
+$client = new CentralPaymentGatewayClient();
 
 // Or override config values with explicit arguments
-$client = new Client(
+$client = new CentralPaymentGatewayClient(
     'https://your-gateway.example.com', // baseUrl
     'your_public_key',                  // apiKey
     'your_secret_key',                  // apiSecret
@@ -54,17 +54,30 @@ $response = $client->initiatePayment([
 $data = json_decode($response->getBody(), true);
 ```
 
-### Get payment status
+### Get payment status/details
 ```php
-$response = $client->getPaymentStatus('payment_id_123');
+$response = $client->getPaymentStatus('txn_abc123'); // Your transaction reference
 $status = json_decode($response->getBody(), true);
 ```
 
-### List transactions
+### Check payment status (manual)
 ```php
-// Optionally provide filters e.g., ['from_date' => '2026-01-01', 'status' => 'success']
-$response = $client->listTransactions();
-$transactions = json_decode($response->getBody(), true);
+$response = $client->checkPaymentStatus('txn_abc123');
+$statusCheck = json_decode($response->getBody(), true);
 ```
 
-See `src/Client.php` for method details.
+### Refund payment
+```php
+$response = $client->refundPayment('txn_abc123', [
+    'amount' => 500, // partial/main refund amount
+]);
+$refund = json_decode($response->getBody(), true);
+```
+
+### Get refund summary
+```php
+$response = $client->getRefundSummary('txn_abc123');
+$summary = json_decode($response->getBody(), true);
+```
+
+See `src/CentralPaymentGatewayClient.php` for more details.

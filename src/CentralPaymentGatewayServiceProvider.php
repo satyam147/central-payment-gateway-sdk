@@ -3,6 +3,7 @@
 namespace Satyam147\CentralPaymentGateway;
 
 use Illuminate\Support\ServiceProvider;
+use Satyam147\CentralPaymentGateway\CentralPaymentGatewayClient;
 
 class CentralPaymentGatewayServiceProvider extends ServiceProvider
 {
