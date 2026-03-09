@@ -3,7 +3,6 @@
 namespace Satyam147\CentralPaymentGateway;
 
 use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 
 class CentralPaymentGatewayClient
@@ -38,12 +37,19 @@ class CentralPaymentGatewayClient
      */
     public function initiatePayment(array $payload): ResponseInterface
     {
+        $method = 'POST';
         $endpoint = '/api/v1/payments';
         $body = json_encode($payload);
-        $timestamp = time();
-        $signature = $this->generateSignature('POST', $endpoint, $body, $timestamp);
+        $timestamp = (string)time();
+        $signature = $this->generateSignature(
+            $this->apiKey,
+            $timestamp,
+            $method,
+            $endpoint,
+            $body
+        );
 
-        return $this->http->request('POST', $endpoint, [
+        return $this->http->request($method, $endpoint, [
             'headers' => [
                 'Content-Type' => 'application/json',
                 'X-Api-Key' => $this->apiKey,
@@ -54,18 +60,20 @@ class CentralPaymentGatewayClient
         ]);
     }
 
-    /**
-     * Get payment status/details.
-     * GET /api/v1/payments/{transaction}
-     * @param string $transactionId
-     * @return ResponseInterface
-     */
     public function getPaymentStatus(string $transactionId): ResponseInterface
     {
+        $method = 'GET';
         $endpoint = "/api/v1/payments/{$transactionId}";
-        $timestamp = time();
-        $signature = $this->generateSignature('GET', $endpoint, null, $timestamp);
-        return $this->http->request('GET', $endpoint, [
+        $body = '';
+        $timestamp = (string)time();
+        $signature = $this->generateSignature(
+            $this->apiKey,
+            $timestamp,
+            $method,
+            $endpoint,
+            $body
+        );
+        return $this->http->request($method, $endpoint, [
             'headers' => [
                 'X-Api-Key' => $this->apiKey,
                 'X-Signature' => $signature,
@@ -74,62 +82,20 @@ class CentralPaymentGatewayClient
         ]);
     }
 
-    /**
-     * Manual payment status check.
-     * POST /api/v1/payments/{transaction}/check-status
-     * @param string $transactionId
-     * @return ResponseInterface
-     */
     public function checkPaymentStatus(string $transactionId): ResponseInterface
     {
+        $method = 'POST';
         $endpoint = "/api/v1/payments/{$transactionId}/check-status";
-        $timestamp = time();
-        $signature = $this->generateSignature('POST', $endpoint, '', $timestamp);
-        return $this->http->request('POST', $endpoint, [
-            'headers' => [
-                'X-Api-Key' => $this->apiKey,
-                'X-Signature' => $signature,
-                'X-Timestamp' => $timestamp,
-            ],
-        ]);
-    }
-
-    /**
-     * Refund a payment.
-     * POST /api/v1/payments/{transaction}/refunds
-     * @param string $transactionId
-     * @param array $payload
-     * @return ResponseInterface
-     */
-    public function refundPayment(string $transactionId, array $payload = []): ResponseInterface
-    {
-        $endpoint = "/api/v1/payments/{$transactionId}/refunds";
-        $body = !empty($payload) ? json_encode($payload) : '';
-        $timestamp = time();
-        $signature = $this->generateSignature('POST', $endpoint, $body, $timestamp);
-        return $this->http->request('POST', $endpoint, [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'X-Api-Key' => $this->apiKey,
-                'X-Signature' => $signature,
-                'X-Timestamp' => $timestamp,
-            ],
-            'body' => $body,
-        ]);
-    }
-
-    /**
-     * Get refund summary.
-     * GET /api/v1/payments/{transaction}/refunds/summary
-     * @param string $transactionId
-     * @return ResponseInterface
-     */
-    public function getRefundSummary(string $transactionId): ResponseInterface
-    {
-        $endpoint = "/api/v1/payments/{$transactionId}/refunds/summary";
-        $timestamp = time();
-        $signature = $this->generateSignature('GET', $endpoint, null, $timestamp);
-        return $this->http->request('GET', $endpoint, [
+        $body = '';
+        $timestamp = (string)time();
+        $signature = $this->generateSignature(
+            $this->apiKey,
+            $timestamp,
+            $method,
+            $endpoint,
+            $body
+        );
+        return $this->http->request($method, $endpoint, [
             'headers' => [
                 'X-Api-Key' => $this->apiKey,
                 'X-Signature' => $signature,
@@ -137,7 +103,28 @@ class CentralPaymentGatewayClient
             ]
         ]);
     }
-
+    
+    public function getRefundSummary(string $transactionId): ResponseInterface
+    {
+        $method = 'GET';
+        $endpoint = "/api/v1/payments/{$transactionId}/refunds/summary";
+        $body = '';
+        $timestamp = (string)time();
+        $signature = $this->generateSignature(
+            $this->apiKey,
+            $timestamp,
+            $method,
+            $endpoint,
+            $body
+        );
+        return $this->http->request($method, $endpoint, [
+            'headers' => [
+                'X-Api-Key' => $this->apiKey,
+                'X-Signature' => $signature,
+                'X-Timestamp' => $timestamp,
+            ]
+        ]);
+    }
 
     /**
      * List transactions
@@ -163,9 +150,15 @@ class CentralPaymentGatewayClient
     /**
      * Generate HMAC signature
      */
-    protected function generateSignature(string $method, string $path, ?string $body, int $timestamp): string
+    protected function generateSignature(
+        string  $apiKey,
+        string  $timestamp,
+        string  $method,
+        string  $path,
+        ?string $body
+    ): string
     {
-        $baseString = $method . "\n" . $path . "\n" . ($body ?? '') . "\n" . $timestamp;
-        return hash_hmac('sha256', $baseString, $this->apiSecret);
+        $stringToSign = $apiKey . $timestamp . strtoupper($method) . $path . ($body ?? '');
+        return hash_hmac('sha256', $stringToSign, $this->apiSecret);
     }
 }
