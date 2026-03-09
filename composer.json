@@ -3,13 +3,13 @@
     "description": "Modular Central Payment Gateway Package",
     "type": "library",
     "license": "MIT",
+    "require": {
+        "guzzlehttp/guzzle": "^7.0"
+    },
     "autoload": {
         "psr-4": {
             "Satyam147\\CentralPaymentGateway\\": "src/"
         }
-    },
-    "require": {
-        "../../vendor/guzzlehttp/guzzle": "^7.0"
     },
     "extra": {
         "laravel": {
@@ -17,5 +17,11 @@
                 "Satyam147\\CentralPaymentGateway\\CentralPaymentGatewayServiceProvider"
             ]
         }
-    }
+    },
+    "authors": [
+        {
+            "name": "Satyam Dasari",
+            "email": "satyam147@gmail.com"
+        }
+    ]
 }
